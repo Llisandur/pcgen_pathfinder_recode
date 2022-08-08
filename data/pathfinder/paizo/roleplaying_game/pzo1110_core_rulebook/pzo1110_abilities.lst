@@ -1,0 +1,308 @@
+# Thu Nov 28 04:15:31 2019 -- reformated by PCGen PrettyLST v6.08.00
+
+# COMMENT: Everything in the Pathfinder GameMode is run off the Default Internal Ability, placing it in Core Essentials
+# COMMENT: Flight Maneuverability is crucial to all creatures with a fly speed, making it a default application if Fly is present.
+# COMMENT: Size_Master sets the Face and Reach - use 'RaceSizeIsLong' at a value of 1 for creatures that aren't 'Tall'
+
+# Ability Name			Category of Ability	Define
+Default				CATEGORY:Internal
+CATEGORY=Internal|Default.MOD					DEFINE:ArmorCheckPenalty|0
+CATEGORY=Internal|Default.MOD					DEFINE:OverrideSubtypeLanguage|0
+CATEGORY=Internal|Default.MOD					DEFINE:DefaultLanguageSetting|0
+CATEGORY=Internal|Default.MOD					DEFINE:HasRacialVision|0
+
+#CATEGORY=Internal|Default.MOD				DEFINE:FastHealingRate|0		ABILITY:Special Ability|AUTOMATIC|Fast Healing|PREVARGT:FastHealingRate,0
+
+###Block: Preparation for new Formula System and Fix for Young Template. No creature should have a negative value for Natural Armor.
+# Ability Name			Define				Combat bonus
+CATEGORY=Internal|Default.MOD	DEFINE:AC_Natural_Armor|0	BONUS:COMBAT|AC|max(AC_Natural_Armor,0)|TYPE=NaturalArmor
+
+
+##============================
+## Age Tracker
+##----------------------------
+
+##	PC and NPCs are usually playable races that follow age rules, Monsters don't normally follow age rules.
+
+####Block: Age Adjustments
+## Ability Name			Define							Ability								Modify VAR
+#CATEGORY=Internal|Default.MOD	DEFINE:UseAgeRules|0	DEFINE:AgeProgression|0	ABILITY:Internal|AUTOMATIC|Age|PREVAREQ:UseAgeRules,1	BONUS:VAR|UseAgeRules|1|TYPE=Bool|PRECHARACTERTYPE:1,PC,NPC
+
+####Block: Determines which Age category ability to grant
+## Ability Name			Category of Ability	Define						Ability											Modify VAR
+#Age					CATEGORY:Internal		DEFINE:UseAgeRulesNegateAgePenalties|0
+#CATEGORY=Internal|Age.MOD												ABILITY:Internal|AUTOMATIC|Age ~ Youth|PREVAREQ:AgeProgression,1		BONUS:VAR|AgeProgression|1|PREAGESET:1,Youth
+#CATEGORY=Internal|Age.MOD												ABILITY:Internal|AUTOMATIC|Age ~ Adult|PREVAREQ:AgeProgression,2		BONUS:VAR|AgeProgression|1|PREAGESET:1,Adult
+#CATEGORY=Internal|Age.MOD												ABILITY:Internal|AUTOMATIC|Age ~ Middle-Aged|PREVAREQ:AgeProgression,3	BONUS:VAR|AgeProgression|1|PREAGESET:1,Middle-Aged
+#CATEGORY=Internal|Age.MOD												ABILITY:Internal|AUTOMATIC|Age ~ Old|PREVAREQ:AgeProgression,4		BONUS:VAR|AgeProgression|1|PREAGESET:1,Old
+#CATEGORY=Internal|Age.MOD												ABILITY:Internal|AUTOMATIC|Age ~ Venerable|PREVAREQ:AgeProgression,5	BONUS:VAR|AgeProgression|1|PREAGESET:1,Venerable
+
+####Block: Game Specific bonuses - Bonuses and Penalties assigned by each age category.
+## Ability Name	Unique Key			Category of Ability	Stat bonus
+#Youth			KEY:Age ~ Youth		CATEGORY:Internal		BONUS:STAT|STR,CON,WIS|-2|PREVAREQ:UseAgeRulesNegateAgePenalties,0	BONUS:STAT|DEX|2|TYPE=Age
+#Adult			KEY:Age ~ Adult		CATEGORY:Internal
+#Middle-Aged		KEY:Age ~ Middle-Aged	CATEGORY:Internal		BONUS:STAT|STR,DEX,CON|-1|TYPE=Age|PREVAREQ:UseAgeRulesNegateAgePenalties,0	BONUS:STAT|INT,WIS,CHA|1|TYPE=Age
+#Old			KEY:Age ~ Old		CATEGORY:Internal		BONUS:STAT|STR,DEX,CON|-3|TYPE=Age|PREVAREQ:UseAgeRulesNegateAgePenalties,0	BONUS:STAT|INT,WIS,CHA|2|TYPE=Age
+#Venerable		KEY:Age ~ Venerable	CATEGORY:Internal		BONUS:STAT|STR,DEX,CON|-6|TYPE=Age|PREVAREQ:UseAgeRulesNegateAgePenalties,0	BONUS:STAT|INT,WIS,CHA|3|TYPE=Age
+
+####Block: Age rules
+## Ability Name					Category of Ability	Type				Modify VAR									Cost
+#Rule - Use Age Rules (Monsters)		CATEGORY:Internal		TYPE:OptionalRules	BONUS:VAR|UseAgeRules|1|TYPE=Boolean				COST:0
+#Rule - Use Age Rules (Negate Penalties)	CATEGORY:Internal		TYPE:OptionalRules	BONUS:VAR|UseAgeRulesNegateAgePenalties|1|TYPE=Boolean	COST:0
+
+
+##============================
+## Automatic Resistance Ability
+##----------------------------
+
+####Block: Automatically add resistance ability for elemental resistances, except in case of immunity.
+## Ability Name			Define					Ability
+#CATEGORY=Internal|Default.MOD	DEFINE:AcidResistanceBonus|0		ABILITY:Special Ability|AUTOMATIC|Resistance to Acid|PREVARGTEQ:AcidResistanceBonus,1|!PREABILITY:1,CATEGORY=Special Ability,Immunity to Acid
+#CATEGORY=Internal|Default.MOD	DEFINE:ColdResistanceBonus|0		ABILITY:Special Ability|AUTOMATIC|Resistance to Cold|PREVARGTEQ:ColdResistanceBonus,1|!PREABILITY:1,CATEGORY=Special Ability,Immunity to Cold
+#CATEGORY=Internal|Default.MOD	DEFINE:FireResistanceBonus|0		ABILITY:Special Ability|AUTOMATIC|Resistance to Fire|PREVARGTEQ:FireResistanceBonus,1|!PREABILITY:1,CATEGORY=Special Ability,Immunity to Fire
+#CATEGORY=Internal|Default.MOD	DEFINE:ElectricityResistanceBonus|0	ABILITY:Special Ability|AUTOMATIC|Resistance to Electricity|PREVARGTEQ:ElectricityResistanceBonus,1|!PREABILITY:1,CATEGORY=Special Ability,Immunity to Electricity
+#CATEGORY=Internal|Default.MOD	DEFINE:SonicResistanceBonus|0		ABILITY:Special Ability|AUTOMATIC|Resistance to Sonic|PREVARGTEQ:SonicResistanceBonus,1|!PREABILITY:1,CATEGORY=Special Ability,Immunity to Sonic
+
+
+#============================
+# Caster Level Tracking
+#----------------------------
+
+#	This system is designed to be expandable to new classes. Each class is designated as either "Arcane" or "Divine".
+#	BONUS:CASTERLEVEL|ClassName|ClassName_Caster_Level	DEFINE:ClassName_Caster_Level|0	BONUS:VAR|ClassName_Caster_Level|CL+Caster_Level_Bonus	BONUS:VAR|Caster_Level_Highest__Divine|ClassName_Caster_Level|TYPE=Base
+#	You can then determine Caster level for any class "ClassName_Caster_Level" or meet prereqs based upon Highest Caster Level for Arcane or Divine.
+#	PREVARGTEQ:Caster_Level_Highest,x
+#	PREVARGTEQ:Caster_Level_Highest__Arcane,x
+#	PREVARGTEQ:Caster_Level_Highest__Divine,x
+
+###Block:
+# Ability Name			Define						Modify VAR
+CATEGORY=Internal|Default.MOD	DEFINE:Caster_Level_Highest|0
+CATEGORY=Internal|Default.MOD	DEFINE:Caster_Level_Highest__Arcane|0
+CATEGORY=Internal|Default.MOD	DEFINE:Caster_Level_Highest__Divine|0
+CATEGORY=Internal|Default.MOD	DEFINE:Caster_Level_Bonus|0
+CATEGORY=Internal|Default.MOD	DEFINE:Caster_Level_Total__Arcane|0
+CATEGORY=Internal|Default.MOD	DEFINE:Caster_Level_Total__Divine|0
+CATEGORY=Internal|Default.MOD	DEFINE:Caster_Level_Total|0
+
+
+# Combined to get Highest Arcane or Divine caster level
+CATEGORY=Internal|Default.MOD								BONUS:VAR|Caster_Level_Highest|max(Caster_Level_Highest__Arcane,Caster_Level_Highest__Divine)
+
+
+#============================
+# Companion Tracker
+#----------------------------
+
+###Block: Add Companion Tracker
+# Ability Name			Define			Ability
+CATEGORY=Internal|Default.MOD	DEFINE:CompanionHD|0	ABILITY:Internal|AUTOMATIC|Companion Tracker|PREMULT:1,[PREVARGTEQ:FamiliarMasterLVL,1],[PREVARGTEQ:AnimalCompanionMasterLVL,1]
+
+###Block: Companion Level Tracker
+# Ability Name					Category of Ability	Define				Modify VAR
+Companion Tracker					CATEGORY:Internal
+CATEGORY=Internal|Companion Tracker.MOD					DEFINE:AnimalCompanionLVL|0	BONUS:VAR|AnimalCompanionLVL|AnimalCompanionMasterLVL|TYPE=Base
+CATEGORY=Internal|Companion Tracker.MOD					DEFINE:FamiliarLVL|0		BONUS:VAR|FamiliarLVL|FamiliarMasterLVL|TYPE=Base
+
+
+#============================
+# Manueverability Tracker
+#----------------------------
+
+###Block: Add Maneuverability Tracker
+# Ability Name			Define				Ability
+CATEGORY=Internal|Default.MOD	DEFINE:Maneuverability|0	ABILITY:Special Ability|AUTOMATIC|Flight Maneuverability|PREMOVE:1,Fly=1|PREVARGT:Maneuverability,0
+
+###Block:
+# Ability Name							Category of Ability		Visible	Define						Ability														Modify VAR												Class Skill	Aspects													Temporary effect description												Temporary Bonus					TEMPVALUE
+Flight Maneuverability						CATEGORY:Special Ability	VISIBLE:NO	DEFINE:FlightManeuverabilityCategory|0																BONUS:VAR|FlightManeuverabilityCategory|min(Maneuverability,5)|TYPE=Base	CSKILL:Fly
+CATEGORY=Special Ability|Flight Maneuverability.MOD															ABILITY:Special Ability|AUTOMATIC|Maneuverability (Clumsy)|PREVARLTEQ:Maneuverability,1																ASPECT:NAME|Maneuverability (Clumsy)|PREVARLTEQ:FlightManeuverabilityCategory,1
+CATEGORY=Special Ability|Flight Maneuverability.MOD															ABILITY:Special Ability|AUTOMATIC|Maneuverability (Poor)|PREVAREQ:Maneuverability,2																	ASPECT:NAME|Maneuverability (Poor)|PREVAREQ:FlightManeuverabilityCategory,2
+CATEGORY=Special Ability|Flight Maneuverability.MOD															ABILITY:Special Ability|AUTOMATIC|Maneuverability (Average)|PREVAREQ:Maneuverability,3																ASPECT:NAME|Maneuverability (Average)|PREVAREQ:FlightManeuverabilityCategory,3
+CATEGORY=Special Ability|Flight Maneuverability.MOD															ABILITY:Special Ability|AUTOMATIC|Maneuverability (Good)|PREVAREQ:Maneuverability,4																	ASPECT:NAME|Maneuverability (Good)|PREVAREQ:FlightManeuverabilityCategory,4
+CATEGORY=Special Ability|Flight Maneuverability.MOD															ABILITY:Special Ability|AUTOMATIC|Maneuverability (Perfect)|PREVARGTEQ:Maneuverability,5																ASPECT:NAME|Maneuverability (Perfect)|PREVAREQ:FlightManeuverabilityCategory,5
+CATEGORY=Special Ability|Flight Maneuverability.MOD																																																											TEMPDESC:Adjust Flight Maneuverability up or down by assigning a positive or negative number.	TEMPBONUS:PC|VAR|Maneuverability|%CHOICE	TEMPVALUE:MIN=-4|MAX=4|TITLE=Flight Maneuverability Adjustment
+
+###Block: Maneuverability Types
+# Ability Name			Category of Ability		Type				Visible	Bonus to skill		Aspects
+Maneuverability (Clumsy)	CATEGORY:Special Ability	TYPE:Maneuverability	VISIBLE:NO	BONUS:SKILL|Fly|-8	ASPECT:Maneuverability|Clumsy
+Maneuverability (Poor)		CATEGORY:Special Ability	TYPE:Maneuverability	VISIBLE:NO	BONUS:SKILL|Fly|-4	ASPECT:Maneuverability|Poor
+Maneuverability (Average)	CATEGORY:Special Ability	TYPE:Maneuverability	VISIBLE:NO					ASPECT:Maneuverability|Average
+Maneuverability (Good)		CATEGORY:Special Ability	TYPE:Maneuverability	VISIBLE:NO	BONUS:SKILL|Fly|4		ASPECT:Maneuverability|Good
+Maneuverability (Perfect)	CATEGORY:Special Ability	TYPE:Maneuverability	VISIBLE:NO	BONUS:SKILL|Fly|8		ASPECT:Maneuverability|Perfect
+
+
+#============================
+# Size Tracker
+#----------------------------
+
+###Block:
+# Ability Name			Define											Ability																		Modify VAR
+CATEGORY=Internal|Default.MOD	DEFINE:RaceSizeIsLong|0
+CATEGORY=Internal|Default.MOD	DEFINE:UseAutoReach|0																												BONUS:VAR|UseAutoReach|1|TYPE=Boolean
+CATEGORY=Internal|Default.MOD	DEFINE:PrimaryAttackDamageSize|0	DEFINE:PrimaryAttackDamageDice|0
+CATEGORY=Internal|Default.MOD													ABILITY:Internal|AUTOMATIC|REACH_0|PREMULT:1,[PRESIZEEQ:F],[PRESIZEEQ:D],[PRESIZEEQ:T]|PREVAREQ:UseAutoReach,1
+CATEGORY=Internal|Default.MOD													ABILITY:Internal|AUTOMATIC|REACH_5|PREMULT:1,[PRESIZEEQ:S],[PRESIZEEQ:M]|PREVAREQ:UseAutoReach,1
+CATEGORY=Internal|Default.MOD													ABILITY:Internal|AUTOMATIC|REACH_10|PRESIZEEQ:L|PREVAREQ:RaceSizeIsLong,0|PREVAREQ:UseAutoReach,1
+CATEGORY=Internal|Default.MOD													ABILITY:Internal|AUTOMATIC|REACH_15|PRESIZEEQ:H|PREVAREQ:RaceSizeIsLong,0|PREVAREQ:UseAutoReach,1
+CATEGORY=Internal|Default.MOD													ABILITY:Internal|AUTOMATIC|REACH_20|PRESIZEEQ:G|PREVAREQ:RaceSizeIsLong,0|PREVAREQ:UseAutoReach,1
+CATEGORY=Internal|Default.MOD													ABILITY:Internal|AUTOMATIC|REACH_30|PRESIZEEQ:C|PREVAREQ:RaceSizeIsLong,0|PREVAREQ:UseAutoReach,1
+CATEGORY=Internal|Default.MOD													ABILITY:Internal|AUTOMATIC|REACH_5|PRESIZEEQ:L|PREVAREQ:RaceSizeIsLong,1|PREVAREQ:UseAutoReach,1
+CATEGORY=Internal|Default.MOD													ABILITY:Internal|AUTOMATIC|REACH_10|PRESIZEEQ:H|PREVAREQ:RaceSizeIsLong,1|PREVAREQ:UseAutoReach,1
+CATEGORY=Internal|Default.MOD													ABILITY:Internal|AUTOMATIC|REACH_15|PRESIZEEQ:G|PREVAREQ:RaceSizeIsLong,1|PREVAREQ:UseAutoReach,1
+CATEGORY=Internal|Default.MOD													ABILITY:Internal|AUTOMATIC|REACH_20|PRESIZEEQ:C|PREVAREQ:RaceSizeIsLong,1|PREVAREQ:UseAutoReach,1
+CATEGORY=Internal|Default.MOD													ABILITY:Internal|AUTOMATIC|Size Tracker|!PREFACT:1,RACE,IsPC=TRUE
+
+
+###Block: Size Mods for Automatic Changes , REACH AND FACE Broken in Templates
+# Ability Name	Category of Ability	Visible	Template
+REACH_0		CATEGORY:Internal		VISIBLE:NO	TEMPLATE:REACH_0
+REACH_5		CATEGORY:Internal		VISIBLE:NO	TEMPLATE:REACH_5
+REACH_10		CATEGORY:Internal		VISIBLE:NO	TEMPLATE:REACH_10
+REACH_15		CATEGORY:Internal		VISIBLE:NO	TEMPLATE:REACH_15
+REACH_20		CATEGORY:Internal		VISIBLE:NO	TEMPLATE:REACH_20
+REACH_30		CATEGORY:Internal		VISIBLE:NO	TEMPLATE:REACH_30
+#
+SIZE_F		CATEGORY:Internal		VISIBLE:NO	TEMPLATE:SIZE_F
+SIZE_D		CATEGORY:Internal		VISIBLE:NO	TEMPLATE:SIZE_D
+SIZE_T		CATEGORY:Internal		VISIBLE:NO	TEMPLATE:SIZE_T
+SIZE_S		CATEGORY:Internal		VISIBLE:NO	TEMPLATE:SIZE_S
+SIZE_M		CATEGORY:Internal		VISIBLE:NO	TEMPLATE:SIZE_M
+SIZE_L		CATEGORY:Internal		VISIBLE:NO	TEMPLATE:SIZE_L
+SIZE_H		CATEGORY:Internal		VISIBLE:NO	TEMPLATE:SIZE_H
+SIZE_G		CATEGORY:Internal		VISIBLE:NO	TEMPLATE:SIZE_G
+SIZE_C		CATEGORY:Internal		VISIBLE:NO	TEMPLATE:SIZE_C
+
+###Block:
+# Ability Name				Category of Ability	Define														Ability										Modify VAR
+Size Tracker				CATEGORY:Internal		DEFINE:BaseSize|0	DEFINE:CurrentSize|0	DEFINE:SizeIncrease|0	DEFINE:SizeDecrease|0
+CATEGORY=Internal|Size Tracker.MOD																															BONUS:VAR|SizeIncrease|CurrentSize-BaseSize	BONUS:VAR|SizeDecrease|BaseSize-CurrentSize
+CATEGORY=Internal|Size Tracker.MOD																				ABILITY:Internal|AUTOMATIC|Base Size ~ Fine|PREBASESIZEEQ:F
+CATEGORY=Internal|Size Tracker.MOD																				ABILITY:Internal|AUTOMATIC|Base Size ~ Diminutive|PREBASESIZEEQ:D
+CATEGORY=Internal|Size Tracker.MOD																				ABILITY:Internal|AUTOMATIC|Base Size ~ Tiny|PREBASESIZEEQ:T
+CATEGORY=Internal|Size Tracker.MOD																				ABILITY:Internal|AUTOMATIC|Base Size ~ Small|PREBASESIZEEQ:S
+CATEGORY=Internal|Size Tracker.MOD																				ABILITY:Internal|AUTOMATIC|Base Size ~ Medium|PREBASESIZEEQ:M
+CATEGORY=Internal|Size Tracker.MOD																				ABILITY:Internal|AUTOMATIC|Base Size ~ Large|PREBASESIZEEQ:L
+CATEGORY=Internal|Size Tracker.MOD																				ABILITY:Internal|AUTOMATIC|Base Size ~ Huge|PREBASESIZEEQ:H
+CATEGORY=Internal|Size Tracker.MOD																				ABILITY:Internal|AUTOMATIC|Base Size ~ Gargantuan|PREBASESIZEEQ:G
+CATEGORY=Internal|Size Tracker.MOD																				ABILITY:Internal|AUTOMATIC|Base Size ~ Colossal|PREBASESIZEEQ:C
+CATEGORY=Internal|Size Tracker.MOD																				ABILITY:Internal|AUTOMATIC|Current Size ~ Fine|PRESIZEEQ:F
+CATEGORY=Internal|Size Tracker.MOD																				ABILITY:Internal|AUTOMATIC|Current Size ~ Diminutive|PRESIZEEQ:D
+CATEGORY=Internal|Size Tracker.MOD																				ABILITY:Internal|AUTOMATIC|Current Size ~ Tiny|PRESIZEEQ:T
+CATEGORY=Internal|Size Tracker.MOD																				ABILITY:Internal|AUTOMATIC|Current Size ~ Small|PRESIZEEQ:S
+CATEGORY=Internal|Size Tracker.MOD																				ABILITY:Internal|AUTOMATIC|Current Size ~ Medium|PRESIZEEQ:M
+CATEGORY=Internal|Size Tracker.MOD																				ABILITY:Internal|AUTOMATIC|Current Size ~ Large|PRESIZEEQ:L
+CATEGORY=Internal|Size Tracker.MOD																				ABILITY:Internal|AUTOMATIC|Current Size ~ Huge|PRESIZEEQ:H
+CATEGORY=Internal|Size Tracker.MOD																				ABILITY:Internal|AUTOMATIC|Current Size ~ Gargantuan|PRESIZEEQ:G
+CATEGORY=Internal|Size Tracker.MOD																				ABILITY:Internal|AUTOMATIC|Current Size ~ Colossal|PRESIZEEQ:C
+#
+Current Size ~ Fine			CATEGORY:Internal																												BONUS:VAR|CurrentSize|1
+Current Size ~ Diminutive		CATEGORY:Internal																												BONUS:VAR|CurrentSize|2
+Current Size ~ Tiny			CATEGORY:Internal																												BONUS:VAR|CurrentSize|3
+Current Size ~ Small			CATEGORY:Internal																												BONUS:VAR|CurrentSize|4
+Current Size ~ Medium			CATEGORY:Internal																												BONUS:VAR|CurrentSize|5
+Current Size ~ Large			CATEGORY:Internal																												BONUS:VAR|CurrentSize|6
+Current Size ~ Huge			CATEGORY:Internal																												BONUS:VAR|CurrentSize|7
+Current Size ~ Gargantuan		CATEGORY:Internal																												BONUS:VAR|CurrentSize|8
+Current Size ~ Colossal			CATEGORY:Internal																												BONUS:VAR|CurrentSize|9
+#
+Base Size ~ Fine				CATEGORY:Internal																												BONUS:VAR|BaseSize|1
+Base Size ~ Diminutive			CATEGORY:Internal																												BONUS:VAR|BaseSize|2
+Base Size ~ Tiny				CATEGORY:Internal																												BONUS:VAR|BaseSize|3
+Base Size ~ Small				CATEGORY:Internal																												BONUS:VAR|BaseSize|4
+Base Size ~ Medium			CATEGORY:Internal																												BONUS:VAR|BaseSize|5
+Base Size ~ Large				CATEGORY:Internal																												BONUS:VAR|BaseSize|6
+Base Size ~ Huge				CATEGORY:Internal																												BONUS:VAR|BaseSize|7
+Base Size ~ Gargantuan			CATEGORY:Internal																												BONUS:VAR|BaseSize|8
+Base Size ~ Colossal			CATEGORY:Internal																												BONUS:VAR|BaseSize|9
+
+###Block:
+# Fine
+# Ability Name						Stat bonus																																			Modify VAR
+CATEGORY=Internal|Base Size ~ Fine.MOD		BONUS:STAT|DEX|-2|PREVARGTEQ:SizeIncrease,1|PREVAREQ:BypassSizeMods,0
+CATEGORY=Internal|Base Size ~ Fine.MOD		BONUS:STAT|DEX|-2|PREVARGTEQ:SizeIncrease,2|PREVAREQ:BypassSizeMods,0	BONUS:STAT|STR|2|PREVARGTEQ:SizeIncrease,2|PREVAREQ:BypassSizeMods,0
+CATEGORY=Internal|Base Size ~ Fine.MOD		BONUS:STAT|DEX|-2|PREVARGTEQ:SizeIncrease,3|PREVAREQ:BypassSizeMods,0	BONUS:STAT|STR|4|PREVARGTEQ:SizeIncrease,3|PREVAREQ:BypassSizeMods,0
+CATEGORY=Internal|Base Size ~ Fine.MOD		BONUS:STAT|DEX|-2|PREVARGTEQ:SizeIncrease,4|PREVAREQ:BypassSizeMods,0	BONUS:STAT|STR|4|PREVARGTEQ:SizeIncrease,4|PREVAREQ:BypassSizeMods,0	BONUS:STAT|CON|2|PREVARGTEQ:SizeIncrease,4|PREVAREQ:BypassSizeMods,0
+CATEGORY=Internal|Base Size ~ Fine.MOD		BONUS:STAT|DEX|-2|PREVARGTEQ:SizeIncrease,5|PREVAREQ:BypassSizeMods,0	BONUS:STAT|STR|8|PREVARGTEQ:SizeIncrease,5|PREVAREQ:BypassSizeMods,0	BONUS:STAT|CON|4|PREVARGTEQ:SizeIncrease,5|PREVAREQ:BypassSizeMods,0	BONUS:VAR|AC_Natural_Armor|2|TYPE=Base.STACK|PREVARGTEQ:SizeIncrease,5|PREVAREQ:BypassSizeMods,0
+CATEGORY=Internal|Base Size ~ Fine.MOD		BONUS:STAT|DEX|-2|PREVARGTEQ:SizeIncrease,6|PREVAREQ:BypassSizeMods,0	BONUS:STAT|STR|8|PREVARGTEQ:SizeIncrease,6|PREVAREQ:BypassSizeMods,0	BONUS:STAT|CON|4|PREVARGTEQ:SizeIncrease,6|PREVAREQ:BypassSizeMods,0	BONUS:VAR|AC_Natural_Armor|3|TYPE=Base.STACK|PREVARGTEQ:SizeIncrease,6|PREVAREQ:BypassSizeMods,0
+CATEGORY=Internal|Base Size ~ Fine.MOD		BONUS:STAT|STR|8|PREVARGTEQ:SizeIncrease,7|PREVAREQ:BypassSizeMods,0	BONUS:STAT|CON|4|PREVARGTEQ:SizeIncrease,7|PREVAREQ:BypassSizeMods,0													BONUS:VAR|AC_Natural_Armor|4|TYPE=Base.STACK|PREVARGTEQ:SizeIncrease,7|PREVAREQ:BypassSizeMods,0
+CATEGORY=Internal|Base Size ~ Fine.MOD		BONUS:STAT|STR|8|PREVARGTEQ:SizeIncrease,8|PREVAREQ:BypassSizeMods,0	BONUS:STAT|CON|4|PREVARGTEQ:SizeIncrease,8|PREVAREQ:BypassSizeMods,0													BONUS:VAR|AC_Natural_Armor|5|TYPE=Base.STACK|PREVARGTEQ:SizeIncrease,8|PREVAREQ:BypassSizeMods,0
+# Diminutive
+CATEGORY=Internal|Base Size ~ Diminutive.MOD	BONUS:STAT|DEX|-2|PREVARGTEQ:SizeIncrease,1|PREVAREQ:BypassSizeMods,0	BONUS:STAT|STR|2|PREVARGTEQ:SizeIncrease,1|PREVAREQ:BypassSizeMods,0
+CATEGORY=Internal|Base Size ~ Diminutive.MOD	BONUS:STAT|DEX|-2|PREVARGTEQ:SizeIncrease,2|PREVAREQ:BypassSizeMods,0	BONUS:STAT|STR|4|PREVARGTEQ:SizeIncrease,2|PREVAREQ:BypassSizeMods,0
+CATEGORY=Internal|Base Size ~ Diminutive.MOD	BONUS:STAT|DEX|-2|PREVARGTEQ:SizeIncrease,3|PREVAREQ:BypassSizeMods,0	BONUS:STAT|STR|4|PREVARGTEQ:SizeIncrease,3|PREVAREQ:BypassSizeMods,0	BONUS:STAT|CON|2|PREVARGTEQ:SizeIncrease,3|PREVAREQ:BypassSizeMods,0
+CATEGORY=Internal|Base Size ~ Diminutive.MOD	BONUS:STAT|DEX|-2|PREVARGTEQ:SizeIncrease,4|PREVAREQ:BypassSizeMods,0	BONUS:STAT|STR|8|PREVARGTEQ:SizeIncrease,4|PREVAREQ:BypassSizeMods,0	BONUS:STAT|CON|4|PREVARGTEQ:SizeIncrease,4|PREVAREQ:BypassSizeMods,0	BONUS:VAR|AC_Natural_Armor|2|TYPE=Base.STACK|PREVARGTEQ:SizeIncrease,4|PREVAREQ:BypassSizeMods,0
+CATEGORY=Internal|Base Size ~ Diminutive.MOD	BONUS:STAT|DEX|-2|PREVARGTEQ:SizeIncrease,5|PREVAREQ:BypassSizeMods,0	BONUS:STAT|STR|8|PREVARGTEQ:SizeIncrease,5|PREVAREQ:BypassSizeMods,0	BONUS:STAT|CON|4|PREVARGTEQ:SizeIncrease,5|PREVAREQ:BypassSizeMods,0	BONUS:VAR|AC_Natural_Armor|3|TYPE=Base.STACK|PREVARGTEQ:SizeIncrease,5|PREVAREQ:BypassSizeMods,0
+CATEGORY=Internal|Base Size ~ Diminutive.MOD	BONUS:STAT|STR|8|PREVARGTEQ:SizeIncrease,6|PREVAREQ:BypassSizeMods,0	BONUS:STAT|CON|4|PREVARGTEQ:SizeIncrease,6|PREVAREQ:BypassSizeMods,0													BONUS:VAR|AC_Natural_Armor|4|TYPE=Base.STACK|PREVARGTEQ:SizeIncrease,6|PREVAREQ:BypassSizeMods,0
+CATEGORY=Internal|Base Size ~ Diminutive.MOD	BONUS:STAT|STR|8|PREVARGTEQ:SizeIncrease,7|PREVAREQ:BypassSizeMods,0	BONUS:STAT|CON|4|PREVARGTEQ:SizeIncrease,7|PREVAREQ:BypassSizeMods,0													BONUS:VAR|AC_Natural_Armor|5|TYPE=Base.STACK|PREVARGTEQ:SizeIncrease,7|PREVAREQ:BypassSizeMods,0
+#
+CATEGORY=Internal|Base Size ~ Diminutive.MOD	BONUS:STAT|DEX|2|PREVARGTEQ:SizeDecrease,1|PREVAREQ:BypassSizeMods,0
+# Tiny
+CATEGORY=Internal|Base Size ~ Tiny.MOD		BONUS:STAT|DEX|-2|PREVARGTEQ:SizeIncrease,1|PREVAREQ:BypassSizeMods,0	BONUS:STAT|STR|4|PREVARGTEQ:SizeIncrease,1|PREVAREQ:BypassSizeMods,0
+CATEGORY=Internal|Base Size ~ Tiny.MOD		BONUS:STAT|DEX|-2|PREVARGTEQ:SizeIncrease,2|PREVAREQ:BypassSizeMods,0	BONUS:STAT|STR|4|PREVARGTEQ:SizeIncrease,2|PREVAREQ:BypassSizeMods,0	BONUS:STAT|CON|2|PREVARGTEQ:SizeIncrease,2|PREVAREQ:BypassSizeMods,0
+CATEGORY=Internal|Base Size ~ Tiny.MOD		BONUS:STAT|DEX|-2|PREVARGTEQ:SizeIncrease,3|PREVAREQ:BypassSizeMods,0	BONUS:STAT|STR|8|PREVARGTEQ:SizeIncrease,3|PREVAREQ:BypassSizeMods,0	BONUS:STAT|CON|4|PREVARGTEQ:SizeIncrease,3|PREVAREQ:BypassSizeMods,0	BONUS:VAR|AC_Natural_Armor|2|TYPE=Base.STACK|PREVARGTEQ:SizeIncrease,3|PREVAREQ:BypassSizeMods,0
+CATEGORY=Internal|Base Size ~ Tiny.MOD		BONUS:STAT|DEX|-2|PREVARGTEQ:SizeIncrease,4|PREVAREQ:BypassSizeMods,0	BONUS:STAT|STR|8|PREVARGTEQ:SizeIncrease,4|PREVAREQ:BypassSizeMods,0	BONUS:STAT|CON|4|PREVARGTEQ:SizeIncrease,4|PREVAREQ:BypassSizeMods,0	BONUS:VAR|AC_Natural_Armor|3|TYPE=Base.STACK|PREVARGTEQ:SizeIncrease,4|PREVAREQ:BypassSizeMods,0
+CATEGORY=Internal|Base Size ~ Tiny.MOD		BONUS:STAT|STR|8|PREVARGTEQ:SizeIncrease,5|PREVAREQ:BypassSizeMods,0	BONUS:STAT|CON|4|PREVARGTEQ:SizeIncrease,5|PREVAREQ:BypassSizeMods,0													BONUS:VAR|AC_Natural_Armor|4|TYPE=Base.STACK|PREVARGTEQ:SizeIncrease,5|PREVAREQ:BypassSizeMods,0
+CATEGORY=Internal|Base Size ~ Tiny.MOD		BONUS:STAT|STR|8|PREVARGTEQ:SizeIncrease,6|PREVAREQ:BypassSizeMods,0	BONUS:STAT|CON|4|PREVARGTEQ:SizeIncrease,6|PREVAREQ:BypassSizeMods,0													BONUS:VAR|AC_Natural_Armor|5|TYPE=Base.STACK|PREVARGTEQ:SizeIncrease,6|PREVAREQ:BypassSizeMods,0
+#
+CATEGORY=Internal|Base Size ~ Tiny.MOD		BONUS:STAT|STR|-2|PREVARGTEQ:SizeDecrease,7|PREVAREQ:BypassSizeMods,0	BONUS:STAT|DEX|2|PREVARGTEQ:SizeDecrease,1|PREVAREQ:BypassSizeMods,0
+CATEGORY=Internal|Base Size ~ Tiny.MOD		BONUS:STAT|DEX|2|PREVARGTEQ:SizeDecrease,2|PREVAREQ:BypassSizeMods,0
+# Small
+CATEGORY=Internal|Base Size ~ Small.MOD		BONUS:STAT|DEX|-2|PREVARGTEQ:SizeIncrease,1|PREVAREQ:BypassSizeMods,0	BONUS:STAT|STR|4|PREVARGTEQ:SizeIncrease,1|PREVAREQ:BypassSizeMods,0	BONUS:STAT|CON|2|PREVARGTEQ:SizeIncrease,1|PREVAREQ:BypassSizeMods,0
+CATEGORY=Internal|Base Size ~ Small.MOD		BONUS:STAT|DEX|-2|PREVARGTEQ:SizeIncrease,2|PREVAREQ:BypassSizeMods,0	BONUS:STAT|STR|8|PREVARGTEQ:SizeIncrease,2|PREVAREQ:BypassSizeMods,0	BONUS:STAT|CON|4|PREVARGTEQ:SizeIncrease,2|PREVAREQ:BypassSizeMods,0	BONUS:VAR|AC_Natural_Armor|2|TYPE=Base.STACK|PREVARGTEQ:SizeIncrease,2|PREVAREQ:BypassSizeMods,0
+CATEGORY=Internal|Base Size ~ Small.MOD		BONUS:STAT|DEX|-2|PREVARGTEQ:SizeIncrease,3|PREVAREQ:BypassSizeMods,0	BONUS:STAT|STR|8|PREVARGTEQ:SizeIncrease,3|PREVAREQ:BypassSizeMods,0	BONUS:STAT|CON|4|PREVARGTEQ:SizeIncrease,3|PREVAREQ:BypassSizeMods,0	BONUS:VAR|AC_Natural_Armor|3|TYPE=Base.STACK|PREVARGTEQ:SizeIncrease,3|PREVAREQ:BypassSizeMods,0
+CATEGORY=Internal|Base Size ~ Small.MOD		BONUS:STAT|STR|8|PREVARGTEQ:SizeIncrease,4|PREVAREQ:BypassSizeMods,0	BONUS:STAT|CON|4|PREVARGTEQ:SizeIncrease,4|PREVAREQ:BypassSizeMods,0													BONUS:VAR|AC_Natural_Armor|4|TYPE=Base.STACK|PREVARGTEQ:SizeIncrease,4|PREVAREQ:BypassSizeMods,0
+CATEGORY=Internal|Base Size ~ Small.MOD		BONUS:STAT|STR|8|PREVARGTEQ:SizeIncrease,5|PREVAREQ:BypassSizeMods,0	BONUS:STAT|CON|4|PREVARGTEQ:SizeIncrease,5|PREVAREQ:BypassSizeMods,0													BONUS:VAR|AC_Natural_Armor|5|TYPE=Base.STACK|PREVARGTEQ:SizeIncrease,5|PREVAREQ:BypassSizeMods,0
+#
+CATEGORY=Internal|Base Size ~ Small.MOD		BONUS:STAT|STR|-4|PREVARGTEQ:SizeDecrease,1|PREVAREQ:BypassSizeMods,0	BONUS:STAT|DEX|2|PREVARGTEQ:SizeDecrease,1|PREVAREQ:BypassSizeMods,0
+CATEGORY=Internal|Base Size ~ Small.MOD		BONUS:STAT|STR|-2|PREVARGTEQ:SizeDecrease,2|PREVAREQ:BypassSizeMods,0	BONUS:STAT|DEX|2|PREVARGTEQ:SizeDecrease,2|PREVAREQ:BypassSizeMods,0
+CATEGORY=Internal|Base Size ~ Small.MOD		BONUS:STAT|DEX|2|PREVARGTEQ:SizeDecrease,3|PREVAREQ:BypassSizeMods,0
+# Medium
+CATEGORY=Internal|Base Size ~ Medium.MOD		BONUS:STAT|DEX|-2|PREVARGTEQ:SizeIncrease,1|PREVAREQ:BypassSizeMods,0	BONUS:STAT|STR|8|PREVARGTEQ:SizeIncrease,1|PREVAREQ:BypassSizeMods,0	BONUS:STAT|CON|4|PREVARGTEQ:SizeIncrease,1|PREVAREQ:BypassSizeMods,0	BONUS:VAR|AC_Natural_Armor|2|TYPE=Base.STACK|PREVARGTEQ:SizeIncrease,1|PREVAREQ:BypassSizeMods,0
+CATEGORY=Internal|Base Size ~ Medium.MOD		BONUS:STAT|DEX|-2|PREVARGTEQ:SizeIncrease,2|PREVAREQ:BypassSizeMods,0	BONUS:STAT|STR|8|PREVARGTEQ:SizeIncrease,2|PREVAREQ:BypassSizeMods,0	BONUS:STAT|CON|4|PREVARGTEQ:SizeIncrease,2|PREVAREQ:BypassSizeMods,0	BONUS:VAR|AC_Natural_Armor|3|TYPE=Base.STACK|PREVARGTEQ:SizeIncrease,2|PREVAREQ:BypassSizeMods,0
+CATEGORY=Internal|Base Size ~ Medium.MOD		BONUS:STAT|STR|8|PREVARGTEQ:SizeIncrease,3|PREVAREQ:BypassSizeMods,0	BONUS:STAT|CON|4|PREVARGTEQ:SizeIncrease,3|PREVAREQ:BypassSizeMods,0													BONUS:VAR|AC_Natural_Armor|4|TYPE=Base.STACK|PREVARGTEQ:SizeIncrease,3|PREVAREQ:BypassSizeMods,0
+CATEGORY=Internal|Base Size ~ Medium.MOD		BONUS:STAT|STR|8|PREVARGTEQ:SizeIncrease,4|PREVAREQ:BypassSizeMods,0	BONUS:STAT|CON|4|PREVARGTEQ:SizeIncrease,4|PREVAREQ:BypassSizeMods,0													BONUS:VAR|AC_Natural_Armor|5|TYPE=Base.STACK|PREVARGTEQ:SizeIncrease,4|PREVAREQ:BypassSizeMods,0
+#
+CATEGORY=Internal|Base Size ~ Medium.MOD		BONUS:STAT|STR|-4|PREVARGTEQ:SizeDecrease,1|PREVAREQ:BypassSizeMods,0	BONUS:STAT|DEX|2|PREVARGTEQ:SizeDecrease,1|PREVAREQ:BypassSizeMods,0	BONUS:STAT|CON|-2|PREVARGTEQ:SizeDecrease,1|PREVAREQ:BypassSizeMods,0
+CATEGORY=Internal|Base Size ~ Medium.MOD		BONUS:STAT|STR|-4|PREVARGTEQ:SizeDecrease,2|PREVAREQ:BypassSizeMods,0	BONUS:STAT|DEX|2|PREVARGTEQ:SizeDecrease,2|PREVAREQ:BypassSizeMods,0
+CATEGORY=Internal|Base Size ~ Medium.MOD		BONUS:STAT|STR|-2|PREVARGTEQ:SizeDecrease,3|PREVAREQ:BypassSizeMods,0	BONUS:STAT|DEX|2|PREVARGTEQ:SizeDecrease,3|PREVAREQ:BypassSizeMods,0
+CATEGORY=Internal|Base Size ~ Medium.MOD		BONUS:STAT|DEX|2|PREVARGTEQ:SizeDecrease,4|PREVAREQ:BypassSizeMods,0
+# Large
+CATEGORY=Internal|Base Size ~ Large.MOD		BONUS:STAT|DEX|-2|PREVARGTEQ:SizeIncrease,1|PREVAREQ:BypassSizeMods,0	BONUS:STAT|STR|8|PREVARGTEQ:SizeIncrease,1|PREVAREQ:BypassSizeMods,0	BONUS:STAT|CON|4|PREVARGTEQ:SizeIncrease,1|PREVAREQ:BypassSizeMods,0	BONUS:VAR|AC_Natural_Armor|3|TYPE=Base.STACK|PREVARGTEQ:SizeIncrease,1|PREVAREQ:BypassSizeMods,0
+CATEGORY=Internal|Base Size ~ Large.MOD		BONUS:STAT|STR|8|PREVARGTEQ:SizeIncrease,2|PREVAREQ:BypassSizeMods,0	BONUS:STAT|CON|4|PREVARGTEQ:SizeIncrease,2|PREVAREQ:BypassSizeMods,0													BONUS:VAR|AC_Natural_Armor|4|TYPE=Base.STACK|PREVARGTEQ:SizeIncrease,2|PREVAREQ:BypassSizeMods,0
+CATEGORY=Internal|Base Size ~ Large.MOD		BONUS:STAT|STR|8|PREVARGTEQ:SizeIncrease,3|PREVAREQ:BypassSizeMods,0	BONUS:STAT|CON|4|PREVARGTEQ:SizeIncrease,3|PREVAREQ:BypassSizeMods,0													BONUS:VAR|AC_Natural_Armor|5|TYPE=Base.STACK|PREVARGTEQ:SizeIncrease,3|PREVAREQ:BypassSizeMods,0
+#
+CATEGORY=Internal|Base Size ~ Large.MOD		BONUS:STAT|STR|-8|PREVARGTEQ:SizeDecrease,1|PREVAREQ:BypassSizeMods,0	BONUS:STAT|DEX|2|PREVARGTEQ:SizeDecrease,1|PREVAREQ:BypassSizeMods,0	BONUS:STAT|CON|-4|PREVARGTEQ:SizeDecrease,1|PREVAREQ:BypassSizeMods,0	BONUS:VAR|AC_Natural_Armor|-2|TYPE=Base|PREVARGTEQ:SizeDecrease,1|PREVAREQ:BypassSizeMods,0
+CATEGORY=Internal|Base Size ~ Large.MOD		BONUS:STAT|STR|-4|PREVARGTEQ:SizeDecrease,2|PREVAREQ:BypassSizeMods,0	BONUS:STAT|DEX|2|PREVARGTEQ:SizeDecrease,2|PREVAREQ:BypassSizeMods,0	BONUS:STAT|CON|-2|PREVARGTEQ:SizeDecrease,2|PREVAREQ:BypassSizeMods,0
+CATEGORY=Internal|Base Size ~ Large.MOD		BONUS:STAT|STR|-4|PREVARGTEQ:SizeDecrease,3|PREVAREQ:BypassSizeMods,0	BONUS:STAT|DEX|2|PREVARGTEQ:SizeDecrease,3|PREVAREQ:BypassSizeMods,0
+CATEGORY=Internal|Base Size ~ Large.MOD		BONUS:STAT|STR|-2|PREVARGTEQ:SizeDecrease,4|PREVAREQ:BypassSizeMods,0	BONUS:STAT|DEX|2|PREVARGTEQ:SizeDecrease,4|PREVAREQ:BypassSizeMods,0
+CATEGORY=Internal|Base Size ~ Large.MOD		BONUS:STAT|DEX|2|PREVARGTEQ:SizeDecrease,5|PREVAREQ:BypassSizeMods,0
+# Huge
+CATEGORY=Internal|Base Size ~ Huge.MOD		BONUS:STAT|STR|8|PREVARGTEQ:SizeIncrease,1|PREVAREQ:BypassSizeMods,0	BONUS:STAT|CON|4|PREVARGTEQ:SizeIncrease,1|PREVAREQ:BypassSizeMods,0													BONUS:VAR|AC_Natural_Armor|4|TYPE=Base.STACK|PREVARGTEQ:SizeIncrease,1|PREVAREQ:BypassSizeMods,0
+CATEGORY=Internal|Base Size ~ Huge.MOD		BONUS:STAT|STR|8|PREVARGTEQ:SizeIncrease,2|PREVAREQ:BypassSizeMods,0	BONUS:STAT|CON|4|PREVARGTEQ:SizeIncrease,2|PREVAREQ:BypassSizeMods,0													BONUS:VAR|AC_Natural_Armor|5|TYPE=Base.STACK|PREVARGTEQ:SizeIncrease,2|PREVAREQ:BypassSizeMods,0
+#
+CATEGORY=Internal|Base Size ~ Huge.MOD		BONUS:STAT|STR|-8|PREVARGTEQ:SizeDecrease,1|PREVAREQ:BypassSizeMods,0	BONUS:STAT|DEX|2|PREVARGTEQ:SizeDecrease,1|PREVAREQ:BypassSizeMods,0	BONUS:STAT|CON|-4|PREVARGTEQ:SizeDecrease,1|PREVAREQ:BypassSizeMods,0	BONUS:VAR|AC_Natural_Armor|-3|TYPE=Base|PREVARGTEQ:SizeDecrease,1|PREVAREQ:BypassSizeMods,0
+CATEGORY=Internal|Base Size ~ Huge.MOD		BONUS:STAT|STR|-8|PREVARGTEQ:SizeDecrease,2|PREVAREQ:BypassSizeMods,0	BONUS:STAT|DEX|2|PREVARGTEQ:SizeDecrease,2|PREVAREQ:BypassSizeMods,0	BONUS:STAT|CON|-4|PREVARGTEQ:SizeDecrease,2|PREVAREQ:BypassSizeMods,0	BONUS:VAR|AC_Natural_Armor|-2|TYPE=Base|PREVARGTEQ:SizeDecrease,2|PREVAREQ:BypassSizeMods,0
+CATEGORY=Internal|Base Size ~ Huge.MOD		BONUS:STAT|STR|-4|PREVARGTEQ:SizeDecrease,3|PREVAREQ:BypassSizeMods,0	BONUS:STAT|DEX|2|PREVARGTEQ:SizeDecrease,3|PREVAREQ:BypassSizeMods,0	BONUS:STAT|CON|-2|PREVARGTEQ:SizeDecrease,3|PREVAREQ:BypassSizeMods,0
+CATEGORY=Internal|Base Size ~ Huge.MOD		BONUS:STAT|STR|-4|PREVARGTEQ:SizeDecrease,4|PREVAREQ:BypassSizeMods,0	BONUS:STAT|DEX|2|PREVARGTEQ:SizeDecrease,4|PREVAREQ:BypassSizeMods,0
+CATEGORY=Internal|Base Size ~ Huge.MOD		BONUS:STAT|STR|-2|PREVARGTEQ:SizeDecrease,5|PREVAREQ:BypassSizeMods,0	BONUS:STAT|DEX|2|PREVARGTEQ:SizeDecrease,5|PREVAREQ:BypassSizeMods,0
+CATEGORY=Internal|Base Size ~ Huge.MOD		BONUS:STAT|DEX|2|PREVARGTEQ:SizeDecrease,6|PREVAREQ:BypassSizeMods,0
+# Gargantuan
+CATEGORY=Internal|Base Size ~ Gargantuan.MOD	BONUS:STAT|STR|8|PREVARGTEQ:SizeIncrease,1|PREVAREQ:BypassSizeMods,0	BONUS:STAT|CON|4|PREVARGTEQ:SizeIncrease,1|PREVAREQ:BypassSizeMods,0													BONUS:VAR|AC_Natural_Armor|5|TYPE=Base.STACK|PREVARGTEQ:SizeIncrease,1|PREVAREQ:BypassSizeMods,0
+#
+CATEGORY=Internal|Base Size ~ Gargantuan.MOD	BONUS:STAT|STR|-8|PREVARGTEQ:SizeDecrease,1|PREVAREQ:BypassSizeMods,0	BONUS:STAT|CON|-4|PREVARGTEQ:SizeDecrease,1|PREVAREQ:BypassSizeMods,0													BONUS:VAR|AC_Natural_Armor|-4|TYPE=Base|PREVARGTEQ:SizeDecrease,1|PREVAREQ:BypassSizeMods,0
+CATEGORY=Internal|Base Size ~ Gargantuan.MOD	BONUS:STAT|STR|-8|PREVARGTEQ:SizeDecrease,2|PREVAREQ:BypassSizeMods,0	BONUS:STAT|DEX|2|PREVARGTEQ:SizeDecrease,2|PREVAREQ:BypassSizeMods,0	BONUS:STAT|CON|-4|PREVARGTEQ:SizeDecrease,2|PREVAREQ:BypassSizeMods,0	BONUS:VAR|AC_Natural_Armor|-3|TYPE=Base|PREVARGTEQ:SizeDecrease,2|PREVAREQ:BypassSizeMods,0
+CATEGORY=Internal|Base Size ~ Gargantuan.MOD	BONUS:STAT|STR|-8|PREVARGTEQ:SizeDecrease,3|PREVAREQ:BypassSizeMods,0	BONUS:STAT|DEX|2|PREVARGTEQ:SizeDecrease,3|PREVAREQ:BypassSizeMods,0	BONUS:STAT|CON|-4|PREVARGTEQ:SizeDecrease,3|PREVAREQ:BypassSizeMods,0	BONUS:VAR|AC_Natural_Armor|-2|TYPE=Base|PREVARGTEQ:SizeDecrease,3|PREVAREQ:BypassSizeMods,0
+CATEGORY=Internal|Base Size ~ Gargantuan.MOD	BONUS:STAT|STR|-4|PREVARGTEQ:SizeDecrease,4|PREVAREQ:BypassSizeMods,0	BONUS:STAT|DEX|2|PREVARGTEQ:SizeDecrease,4|PREVAREQ:BypassSizeMods,0	BONUS:STAT|CON|-2|PREVARGTEQ:SizeDecrease,4|PREVAREQ:BypassSizeMods,0
+CATEGORY=Internal|Base Size ~ Gargantuan.MOD	BONUS:STAT|STR|-4|PREVARGTEQ:SizeDecrease,5|PREVAREQ:BypassSizeMods,0	BONUS:STAT|DEX|2|PREVARGTEQ:SizeDecrease,5|PREVAREQ:BypassSizeMods,0
+CATEGORY=Internal|Base Size ~ Gargantuan.MOD	BONUS:STAT|STR|-2|PREVARGTEQ:SizeDecrease,6|PREVAREQ:BypassSizeMods,0	BONUS:STAT|DEX|2|PREVARGTEQ:SizeDecrease,6|PREVAREQ:BypassSizeMods,0
+CATEGORY=Internal|Base Size ~ Gargantuan.MOD	BONUS:STAT|DEX|2|PREVARGTEQ:SizeDecrease,7|PREVAREQ:BypassSizeMods,0
+# Colossal
+CATEGORY=Internal|Base Size ~ Colossal.MOD	BONUS:STAT|STR|-8|PREVARGTEQ:SizeDecrease,1|PREVAREQ:BypassSizeMods,0	BONUS:STAT|CON|-4|PREVARGTEQ:SizeDecrease,1|PREVAREQ:BypassSizeMods,0													BONUS:VAR|AC_Natural_Armor|-5|TYPE=Base|PREVARGTEQ:SizeDecrease,1|PREVAREQ:BypassSizeMods,0
+CATEGORY=Internal|Base Size ~ Colossal.MOD	BONUS:STAT|STR|-8|PREVARGTEQ:SizeDecrease,2|PREVAREQ:BypassSizeMods,0	BONUS:STAT|CON|-4|PREVARGTEQ:SizeDecrease,2|PREVAREQ:BypassSizeMods,0													BONUS:VAR|AC_Natural_Armor|-4|TYPE=Base|PREVARGTEQ:SizeDecrease,2|PREVAREQ:BypassSizeMods,0
+CATEGORY=Internal|Base Size ~ Colossal.MOD	BONUS:STAT|STR|-8|PREVARGTEQ:SizeDecrease,3|PREVAREQ:BypassSizeMods,0	BONUS:STAT|DEX|2|PREVARGTEQ:SizeDecrease,3|PREVAREQ:BypassSizeMods,0	BONUS:STAT|CON|-4|PREVARGTEQ:SizeDecrease,3|PREVAREQ:BypassSizeMods,0	BONUS:VAR|AC_Natural_Armor|-3|TYPE=Base|PREVARGTEQ:SizeDecrease,3|PREVAREQ:BypassSizeMods,0
+CATEGORY=Internal|Base Size ~ Colossal.MOD	BONUS:STAT|STR|-8|PREVARGTEQ:SizeDecrease,4|PREVAREQ:BypassSizeMods,0	BONUS:STAT|DEX|2|PREVARGTEQ:SizeDecrease,4|PREVAREQ:BypassSizeMods,0	BONUS:STAT|CON|-4|PREVARGTEQ:SizeDecrease,4|PREVAREQ:BypassSizeMods,0	BONUS:VAR|AC_Natural_Armor|-2|TYPE=Base|PREVARGTEQ:SizeDecrease,4|PREVAREQ:BypassSizeMods,0
+CATEGORY=Internal|Base Size ~ Colossal.MOD	BONUS:STAT|STR|-4|PREVARGTEQ:SizeDecrease,5|PREVAREQ:BypassSizeMods,0	BONUS:STAT|DEX|2|PREVARGTEQ:SizeDecrease,5|PREVAREQ:BypassSizeMods,0	BONUS:STAT|CON|-2|PREVARGTEQ:SizeDecrease,5|PREVAREQ:BypassSizeMods,0
+CATEGORY=Internal|Base Size ~ Colossal.MOD	BONUS:STAT|STR|-4|PREVARGTEQ:SizeDecrease,6|PREVAREQ:BypassSizeMods,0	BONUS:STAT|DEX|2|PREVARGTEQ:SizeDecrease,6|PREVAREQ:BypassSizeMods,0
+CATEGORY=Internal|Base Size ~ Colossal.MOD	BONUS:STAT|STR|-2|PREVARGTEQ:SizeDecrease,7|PREVAREQ:BypassSizeMods,0	BONUS:STAT|DEX|2|PREVARGTEQ:SizeDecrease,7|PREVAREQ:BypassSizeMods,0
+CATEGORY=Internal|Base Size ~ Colossal.MOD	BONUS:STAT|DEX|2|PREVARGTEQ:SizeDecrease,8|PREVAREQ:BypassSizeMods,0

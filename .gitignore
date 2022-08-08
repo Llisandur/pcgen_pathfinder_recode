@@ -1,0 +1,7 @@
+config.ini
+pcgen.log.lck
+pcgen.log
+*.pcg
+characters/*
+.vscode
+*.code-workspace
